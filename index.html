@@ -151,25 +151,13 @@
             const areaSlideshow = document.getElementById('area-slideshow');
             const videoPanel = document.getElementById('panel-video');
 
-            // 1. Masukkan Teks Dasar
-            let isiSlide = [
-                `<div><div style="font-size: 1.5rem; color: #eab308;">Kutipan Hari Ini</div><div style="font-size: 2.2rem; font-weight: bold; margin-top:10px;">"${dataMasjidUtama.Kutipan_Teks || '-'}"</div><div style="font-size: 1.5rem; margin-top: 15px;">${dataMasjidUtama.Kutipan_Sumber || '-'}</div></div>`,
-                function terapkanModeTampilan(mode) {
-            const kontainer = document.getElementById('kontainer-utama');
-            const panelKiri = document.getElementById('panel-kiri');
-            const panelKanan = document.getElementById('panel-kanan');
-            const areaSlideshow = document.getElementById('area-slideshow');
-            const videoPanel = document.getElementById('panel-video');
-
             // --- LOGIKA MENCARI TANGGAL JUMAT TERDEKAT ---
             function getTanggalJumat() {
                 const now = new Date();
-                const hariIni = now.getDay(); // 0 = Minggu, 5 = Jumat, 6 = Sabtu
-                // Menghitung jarak hari menuju hari Jumat terdekat
+                const hariIni = now.getDay(); 
                 const jarakKeJumat = (5 + 7 - hariIni) % 7; 
                 now.setDate(now.getDate() + jarakKeJumat);
                 
-                // Format tanggal ala Indonesia (contoh: 20 Maret 2026)
                 const opsiFormat = { day: 'numeric', month: 'long', year: 'numeric' };
                 return "Jumat, " + now.toLocaleDateString('id-ID', opsiFormat);
             }
@@ -179,13 +167,12 @@
             let isiSlide = [
                 `<div><div style="font-size: 1.5rem; color: #eab308;">Kutipan Hari Ini</div><div style="font-size: 2.2rem; font-weight: bold; margin-top:10px;">"${dataMasjidUtama.Kutipan_Teks || '-'}"</div><div style="font-size: 1.5rem; margin-top: 15px;">${dataMasjidUtama.Kutipan_Sumber || '-'}</div></div>`,
                 
-                // --- SLIDE JUMAT (DENGAN TANGGAL OTOMATIS) ---
                 `<div><div style="font-size: 1.5rem; color: #eab308;">Petugas Jumat Pekan Ini<br><span style="font-size: 1.2rem; color: #cbd5e1;">(${tanggalJumatDinamis})</span></div><div style="font-size: 2rem; margin-top:10px;">Khatib: <b>${dataMasjidUtama.Jumat_Khatib || '-'}</b></div><div style="font-size: 2rem; margin-top: 10px;">Imam: <b>${dataMasjidUtama.Jumat_Imam || '-'}</b></div></div>`,
                 
                 `<div><div style="font-size: 1.5rem; color: #eab308;">Laporan Keuangan</div><div style="font-size: 1.8rem; margin-top:10px;">Pemasukan: Rp ${Number(dataMasjidUtama.Uang_Pemasukan || 0).toLocaleString('id-ID')}</div><div style="font-size: 1.8rem;">Pengeluaran: Rp ${Number(dataMasjidUtama.Uang_Pengeluaran || 0).toLocaleString('id-ID')}</div><div style="font-size: 2.5rem; font-weight: bold; margin-top: 15px; color: #4ade80;">Saldo: Rp ${Number(dataMasjidUtama.Uang_SaldoAkhir || 0).toLocaleString('id-ID')}</div></div>`
             ];
 
-            // 2. Masukkan Poster / QRIS ke dalam rotasi jika diisi di Sheets
+            // 2. Masukkan Poster / QRIS ke dalam rotasi
             if (dataMasjidUtama.Poster_1 && dataMasjidUtama.Poster_1.trim() !== "") {
                 isiSlide.push(`<div style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;"><img src="${dataMasjidUtama.Poster_1}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:10px;"></div>`);
             }
@@ -223,48 +210,6 @@
                         slideIndexGlobal++;
                     }, 500);
                 }, 20000); 
-            }
-        }                `<div><div style="font-size: 1.5rem; color: #eab308;">Laporan Keuangan</div><div style="font-size: 1.8rem; margin-top:10px;">Pemasukan: Rp ${Number(dataMasjidUtama.Uang_Pemasukan || 0).toLocaleString('id-ID')}</div><div style="font-size: 1.8rem;">Pengeluaran: Rp ${Number(dataMasjidUtama.Uang_Pengeluaran || 0).toLocaleString('id-ID')}</div><div style="font-size: 2.5rem; font-weight: bold; margin-top: 15px; color: #4ade80;">Saldo: Rp ${Number(dataMasjidUtama.Uang_SaldoAkhir || 0).toLocaleString('id-ID')}</div></div>`
-            ];
-
-            // 2. Masukkan Poster / QRIS ke dalam rotasi jika diisi di Sheets
-            if (dataMasjidUtama.Poster_1 && dataMasjidUtama.Poster_1.trim() !== "") {
-                isiSlide.push(`<div style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;"><img src="${dataMasjidUtama.Poster_1}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:10px;"></div>`);
-            }
-            if (dataMasjidUtama.Poster_2 && dataMasjidUtama.Poster_2.trim() !== "") {
-                isiSlide.push(`<div style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;"><img src="${dataMasjidUtama.Poster_2}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:10px;"></div>`);
-            }
-            if (dataMasjidUtama.Poster_3 && dataMasjidUtama.Poster_3.trim() !== "") {
-                isiSlide.push(`<div style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;"><img src="${dataMasjidUtama.Poster_3}" style="max-width:100%; max-height:100%; object-fit:contain; border-radius:10px;"></div>`);
-            }
-
-            if (mode && mode.toLowerCase() === 'slideshow') {
-                kontainer.style.gridTemplateColumns = "1fr"; 
-                setInterval(() => {
-                    if (modeAdzanAktif) return;
-                    if (slideIndexGlobal === 0) {
-                        panelKiri.style.display = 'flex'; panelKanan.style.display = 'none';
-                    } else if (slideIndexGlobal === 1) {
-                        panelKiri.style.display = 'none'; panelKanan.style.display = 'flex'; 
-                        videoPanel.style.display = 'block'; areaSlideshow.style.display = 'none'; 
-                    } else {
-                        panelKiri.style.display = 'none'; panelKanan.style.display = 'flex';
-                        videoPanel.style.display = 'none'; areaSlideshow.style.display = 'flex'; 
-                        areaSlideshow.innerHTML = isiSlide[slideIndexGlobal - 2];
-                    }
-                    slideIndexGlobal = (slideIndexGlobal + 1) % (isiSlide.length + 2);
-                }, 20000); // 20 Detik per Layar
-
-            } else {
-                setInterval(() => {
-                    if (modeAdzanAktif) return;
-                    areaSlideshow.style.opacity = 0; 
-                    setTimeout(() => {
-                        areaSlideshow.innerHTML = isiSlide[slideIndexGlobal % isiSlide.length];
-                        areaSlideshow.style.opacity = 1;
-                        slideIndexGlobal++;
-                    }, 500);
-                }, 20000); // 20 Detik per Teks/Poster
             }
         }
 
