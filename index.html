@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart TV Masjid</title>
+    <style>
+        :root {
+            --warna-utama: #0f172a; 
+            --warna-aksen: #eab308; 
+            --teks-terang: #f8fafc;
+        }
+
+        body {
+            margin: 0; padding: 0; background-color: var(--warna-utama);
+            color: var(--teks-terang); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh; overflow: hidden; display: flex; flex-direction: column;
+        }
+
+        /* HEADER & FOOTER */
+        header {
+            height: 80px; background-color: rgba(0, 0, 0, 0.3); display: flex;
+            align-items: center; justify-content: center; font-size: 2.5rem;
+            font-weight: bold; color: var(--warna-aksen); z-index: 10;
+        }
+        footer {
+            height: 50px; background-color: var(--warna-aksen); color: #000;
+            font-size: 1.5rem; font-weight: bold; display: flex; align-items: center;
+            overflow: hidden; white-space: nowrap; z-index: 10;
+        }
+        .marquee { animation: scroll 20s linear infinite; }
+        @keyframes scroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+        /* KONTANER UTAMA */
+        #kontainer-utama {
+            flex: 1; display: grid; grid-template-columns: 1fr 2fr; transition: all 0.5s;
+        }
+        
+        /* ZONA KIRI & KANAN */
+        .zona-kiri { padding: 20px; border-right: 2px solid rgba(255, 255, 255, 0.1); display: flex; flex-direction: column; align-items: center; }
+        .zona-kanan { display: flex; flex-direction: column; }
+        .video-container { flex: 2; background-color: #000; }
+        iframe { width: 100%; height: 100%; border: none; }
+        .info-dinamis { flex: 1; padding: 30px; font-size: 2rem; text-align: center; display: flex; align-items: center; justify-content: center; background-color: rgba(0, 0, 0, 0.2); transition: opacity 0.5s; }
+
+        /* TYPOGRAPHY */
+        #jam-digital { font-size: 6rem; font-weight: bold; margin-bottom: 20px; }
+        .waktu-item { display: flex; justify-content: space-between; padding: 15px; margin-bottom: 10px; background-color: rgba(255, 255, 255, 0.05); border-radius: 8px; font-size: 1.5rem; width: 100%; box-sizing: border-box; }
+
+        /* LAYAR ADZAN OVERRIDE */
+        #layar-adzan {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #000; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <header id="nama-masjid">Menghubungkan ke Database...</header>
+
+    <div id="kontainer-utama">
+        <div class="zona-kiri" id="panel-kiri">
+            <div id="jam-digital">00:00</div>
+            <div id="list-jadwal" style="width: 100%;">Memuat jadwal otomatis...</div>
+        </div>
+        <div class="zona-kanan" id="panel-kanan">
+            <div class="video-container" id="panel-video">
+                <iframe id="youtube-live" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+            </div>
+            <div class="info-dinamis" id="area-slideshow">Menyiapkan informasi...</div>
+        </div>
+    </div>
+
+    <footer><div class="marquee" id="running-text">Mohon tunggu...</div></footer>
+
+    <div id="layar-adzan">
+        <h1 style="font-size: 6rem; color: var(--warna-aksen); margin-bottom: 0;">WAKTU ADZAN</h1>
+        <h2 id="teks-sholat-sekarang" style="font-size: 8rem; margin: 10px 0;">-</h2>
+        <div style="font-size: 4rem; margin-top: 50px;">Iqomah dalam:<br>
+            <span id="countdown-iqomah" style="font-size: 10rem; font-weight: bold; color: #ef4444;">00:00</span>
+        </div>
+        <p style="font-size: 2.5rem; margin-top: 40px; color: #94a3b8;">Mohon luruskan dan rapatkan shaf</p>
+    </div>
+
+    <script>
+        // --- 1. PENGATURAN URL DAN ID MASJID ---
+        const URL_GAS = "https://script.google.com/macros/s/AKfycbymxlu_CN7j9MAZDVs2xtyJe5hu9lajbDUtIDUPEYQzh2nzNW007JVKv08_91O25ijx/exec"; 
+        const urlParams = new URLSearchParams(window.location.search);
+        const idMasjid = urlParams.get('id') || 'mbtr_mks';
+
+        let dataMasjidUtama = {};
+        let jadwalSholatHariIni = {};
+        let modeAdzanAktif = false;
+        let slideIndexGlobal = 0;
+
+        // --- 2. AMBIL DATA DARI GOOGLE SHEETS ---
+        async function ambilDataMasjid() {
+            try {
+                const response = await fetch(`${URL_GAS}?id=${idMasjid}`);
+                const data = await response.json();
+                
+                if(data.status === "error") {
+                    document.getElementById('nama-masjid').innerText = "Data Tidak Ditemukan";
+                    return;
+                }
+
+                dataMasjidUtama = data;
+                document.getElementById('nama-masjid').innerText = data.Nama_Masjid || "Nama Masjid Belum Diisi";
+                document.getElementById('running-text').innerText = data.Running_Text || "Selamat Datang";
+                
+                // --- LOGIKA YOUTUBE (CHANNEL ID vs VIDEO ID) ---
+                if(data.YouTube_Live_ID) {
+                    let linkYouTube = "";
+                    let ytID = data.YouTube_Live_ID.trim();
+                    
+                    if (ytID.startsWith("UC")) {
+                        // Jika admin mengisi Channel ID
+                        linkYouTube = `https://www.youtube.com/embed/live_stream?channel=${ytID}&autoplay=1&mute=1`;
+                    } else {
+                        // Jika admin mengisi Video ID biasa
+                        linkYouTube = `https://www.youtube.com/embed/${ytID}?autoplay=1&mute=1`;
+                    }
+                    document.getElementById('youtube-live').src = linkYouTube;
+                }
+
+                ambilJadwalSholat(data.Lokasi_Kota || "Makassar");
+                terapkanModeTampilan(data.Mode_Tampilan); 
+
+            } catch (error) { 
+                console.error("Error Koneksi:", error); 
+                document.getElementById('nama-masjid').innerText = "Gagal Terhubung ke Database";
+            }
+        }
+
+        // --- 3. JADWAL SHOLAT API KEMENAG ---
+        async function ambilJadwalSholat(kota) {
+            const urlAdzan = `https://api.aladhan.com/v1/timingsByCity?city=${kota}&country=Indonesia&method=20`;
+            try {
+                const res = await fetch(urlAdzan);
+                const waktu = await res.json();
+                jadwalSholatHariIni = waktu.data.timings;
+
+                document.getElementById('list-jadwal').innerHTML = `
+                    <div class="waktu-item"><span>Subuh</span> <span>${jadwalSholatHariIni.Fajr}</span></div>
+                    <div class="waktu-item"><span>Terbit</span> <span>${jadwalSholatHariIni.Sunrise}</span></div>
+                    <div class="waktu-item"><span>Dzuhur</span> <span>${jadwalSholatHariIni.Dhuhr}</span></div>
+                    <div class="waktu-item"><span>Ashar</span> <span>${jadwalSholatHariIni.Asr}</span></div>
+                    <div class="waktu-item"><span>Maghrib</span> <span>${jadwalSholatHariIni.Maghrib}</span></div>
+                    <div class="waktu-item"><span>Isya</span> <span>${jadwalSholatHariIni.Isha}</span></div>
+                `;
+            } catch (error) { console.error("Error Adzan:", error); }
+        }
+
+        // --- 4. LOGIKA MODE TAMPILAN & SLIDESHOW ---
+        function terapkanModeTampilan(mode) {
+            const kontainer = document.getElementById('kontainer-utama');
+            const panelKiri = document.getElementById('panel-kiri');
+            const panelKanan = document.getElementById('panel-kanan');
+            const areaSlideshow = document.getElementById('area-slideshow');
+            const videoPanel = document.getElementById('panel-video');
+
+            const isiSlide = [
+                `<div><div style="font-size: 1.5rem; color: #eab308;">Kutipan Hari Ini</div><div style="font-size: 2.2rem; font-weight: bold; margin-top:10px;">"${dataMasjidUtama.Kutipan_Teks || '-'}"</div><div style="font-size: 1.5rem; margin-top: 15px;">${dataMasjidUtama.Kutipan_Sumber || '-'}</div></div>`,
+                `<div><div style="font-size: 1.5rem; color: #eab308;">Petugas Jumat Pekan Ini</div><div style="font-size: 2rem; margin-top:10px;">Khatib: <b>${dataMasjidUtama.Jumat_Khatib || '-'}</b></div><div style="font-size: 2rem; margin-top: 10px;">Imam: <b>${dataMasjidUtama.Jumat_Imam || '-'}</b></div></div>`,
+                `<div><div style="font-size: 1.5rem; color: #eab308;">Laporan Keuangan</div><div style="font-size: 1.8rem; margin-top:10px;">Pemasukan: Rp ${Number(dataMasjidUtama.Uang_Pemasukan || 0).toLocaleString('id-ID')}</div><div style="font-size: 1.8rem;">Pengeluaran: Rp ${Number(dataMasjidUtama.Uang_Pengeluaran || 0).toLocaleString('id-ID')}</div><div style="font-size: 2.5rem; font-weight: bold; margin-top: 15px; color: #4ade80;">Saldo: Rp ${Number(dataMasjidUtama.Uang_SaldoAkhir || 0).toLocaleString('id-ID')}</div></div>`
+            ];
+
+            if (mode && mode.toLowerCase() === 'slideshow') {
+                kontainer.style.gridTemplateColumns = "1fr"; 
+                setInterval(() => {
+                    if (modeAdzanAktif) return;
+                    if (slideIndexGlobal === 0) {
+                        panelKiri.style.display = 'flex'; panelKanan.style.display = 'none';
+                    } else if (slideIndexGlobal === 1) {
+                        panelKiri.style.display = 'none'; panelKanan.style.display = 'flex'; 
+                        videoPanel.style.display = 'block'; areaSlideshow.style.display = 'none'; 
+                    } else {
+                        panelKiri.style.display = 'none'; panelKanan.style.display = 'flex';
+                        videoPanel.style.display = 'none'; areaSlideshow.style.display = 'flex'; 
+                        areaSlideshow.innerHTML = isiSlide[slideIndexGlobal - 2];
+                    }
+                    slideIndexGlobal = (slideIndexGlobal + 1) % (isiSlide.length + 2);
+                }, 15000); 
+
+            } else {
+                setInterval(() => {
+                    if (modeAdzanAktif) return;
+                    areaSlideshow.style.opacity = 0; 
+                    setTimeout(() => {
+                        areaSlideshow.innerHTML = isiSlide[slideIndexGlobal % isiSlide.length];
+                        areaSlideshow.style.opacity = 1;
+                        slideIndexGlobal++;
+                    }, 500);
+                }, 10000); 
+            }
+        }
+
+        // --- 5. LOGIKA WAKTU & ADZAN ---
+        function cekWaktuSholat() {
+            const sekarang = new Date();
+            const jam = String(sekarang.getHours()).padStart(2, '0');
+            const menit = String(sekarang.getMinutes()).padStart(2, '0');
+            const waktuSkrg = `${jam}:${menit}`;
+
+            document.getElementById('jam-digital').innerText = waktuSkrg;
+
+            if (modeAdzanAktif || Object.keys(jadwalSholatHariIni).length === 0) return;
+
+            const namaSholat = Object.keys(jadwalSholatHariIni).find(key => jadwalSholatHariIni[key] === waktuSkrg && key !== 'Sunrise');
+
+            if (namaSholat) {
+                let menitIqomah = 10; 
+                let terjemahanSholat = namaSholat;
+
+                if (namaSholat === 'Fajr') { menitIqomah = dataMasjidUtama.Iqomah_Subuh || 15; terjemahanSholat = "SUBUH"; }
+                if (namaSholat === 'Dhuhr') { menitIqomah = dataMasjidUtama.Iqomah_Dzuhur || 10; terjemahanSholat = "DZUHUR"; }
+                if (namaSholat === 'Asr') { menitIqomah = dataMasjidUtama.Iqomah_Ashar || 10; terjemahanSholat = "ASHAR"; }
+                if (namaSholat === 'Maghrib') { menitIqomah = dataMasjidUtama.Iqomah_Maghrib || 5; terjemahanSholat = "MAGHRIB"; }
+                if (namaSholat === 'Isha') { menitIqomah = dataMasjidUtama.Iqomah_Isya || 10; terjemahanSholat = "ISYA"; }
+
+                mulaiModeAdzan(terjemahanSholat, menitIqomah);
+            }
+        }
+
+        function mulaiModeAdzan(namaSholat, menitIqomah) {
+            modeAdzanAktif = true;
+            const layarAdzan = document.getElementById('layar-adzan');
+            document.getElementById('teks-sholat-sekarang').innerText = namaSholat;
+            layarAdzan.style.display = 'flex'; 
+
+            let waktuIqomahDetik = menitIqomah * 60; 
+            const timer = setInterval(() => {
+                waktuIqomahDetik--;
+                const m = Math.floor(waktuIqomahDetik / 60);
+                const s = waktuIqomahDetik % 60;
+                document.getElementById('countdown-iqomah').innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+                if (waktuIqomahDetik <= 0) {
+                    clearInterval(timer);
+                    layarAdzan.style.display = 'none';
+                    modeAdzanAktif = false;
+                }
+            }, 1000);
+        }
+
+        setInterval(cekWaktuSholat, 1000); 
+        ambilDataMasjid();
+    </script>
+</body>
+</html>
