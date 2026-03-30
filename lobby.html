@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart TV Lobi - SIT Ar-Rahmah</title>
+    
+    <script src="PrayTimes.js"></script>
+    
+    <style>
+        :root { 
+            --warna-utama: #0f172a; /* Biru Gelap Elegan */
+            --warna-aksen: #eab308; /* Emas Ar-Rahmah */
+            --teks-terang: #f8fafc; 
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        body { margin: 0; padding: 0; background-color: var(--warna-utama); color: var(--teks-terang); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* Header lebih elegan untuk tamu */
+        header { height: 80px; background-color: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; color: var(--warna-aksen); z-index: 10; position: relative; letter-spacing: 2px; text-transform: uppercase; }
+        
+        #status-koneksi { position: absolute; right: 20px; font-size: 1rem; color: #4ade80; display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: normal; }
+        .dot { height: 10px; width: 10px; background-color: #4ade80; border-radius: 50%; display: inline-block; }
+
+        footer { height: 50px; background-color: var(--warna-aksen); color: #000; font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; overflow: hidden; white-space: nowrap; z-index: 10; }
+        .marquee { animation: scroll 25s linear infinite; }
+        @keyframes scroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+        
+        #kontainer-utama { flex: 1; display: grid; grid-template-columns: 1fr 2.5fr; transition: all 0.5s; } /* Panel kanan lebih lebar untuk infografis sekolah */
+        
+        .zona-kiri { padding: 25px; border-right: 2px solid rgba(255, 255, 255, 0.1); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background: linear-gradient(180deg, rgba(15,23,42,1) 0%, rgba(30,41,59,1) 100%); }
+        
+        /* Zona Kanan untuk Infografis / Foto Siswa */
+        .zona-kanan { background-color: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        
+        #panel-poster { width: 100%; height: 100%; object-fit: contain; transition: opacity 1s ease-in-out; border-radius: 0px; }
+
+        #jam-digital { font-size: 6.5rem; font-weight: bold; margin-bottom: 25px; font-variant-numeric: tabular-nums; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .waktu-item { display: flex; justify-content: space-between; padding: 15px 20px; margin-bottom: 12px; background-color: var(--card-bg); border-radius: 8px; font-size: 1.4rem; width: 100%; box-sizing: border-box; border-left: 4px solid var(--warna-aksen); }
+        
+        #kotak-next-sholat { margin-top: auto; padding: 20px; background-color: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 12px; width: 100%; box-sizing: border-box; text-align: center; margin-bottom: 20px; }
+
+        /* Area Edukasi & Akademis di bawah gambar */
+        #area-info-bawah { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 85%; padding: 20px; background-color: rgba(15, 23, 42, 0.9); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 25px rgba(0,0,0,0.5); font-size: 1.2rem; text-align: center; transition: opacity 0.5s; }
+        
+        /* Layar Adzan tetap ada sebagai identitas SIT */
+        #layar-adzan { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0f172a; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span id="nama-masjid">Ruang Tamu SIT Ar-Rahmah</span>
+        <div id="status-koneksi"><span class="dot" id="dot-koneksi"></span><span id="teks-koneksi">Online</span></div>
+    </header>
+
+    <div id="kontainer-utama">
+        <div class="zona-kiri" id="panel-kiri">
+            <div id="jam-digital">00:00</div>
+            
+            <div style="font-size: 1.2rem; margin-bottom: 15px; color: #94a3b8; width: 100%; text-align: left; font-weight: bold; text-transform: uppercase;">Jadwal Sholat Hari Ini</div>
+            <div id="list-jadwal" style="width: 100%;">Memuat jadwal otomatis...</div>
+            
+            <div id="kotak-next-sholat">
+                <div style="font-size: 1.2rem; color: #cbd5e1;">Waktu sholat berikutnya: <span id="nama-next-sholat" style="color: var(--warna-aksen); font-weight: bold;">-</span></div>
+                <div id="timer-next-sholat" style="font-size: 2.5rem; font-weight: bold; color: var(--teks-terang); margin-top: 5px; font-variant-numeric: tabular-nums;">-00:00:00</div>
+            </div>
+        </div>
+        
+        <div class="zona-kanan" id="panel-kanan">
+            <img id="panel-poster" src="" alt="Infografis Sekolah">
+            
+            <div id="area-info-bawah">Menyiapkan informasi...</div>
+        </div>
+    </div>
+
+    <footer><div class="marquee" id="running-text">Mohon tunggu...</div></footer>
+
+    <div id="layar-adzan">
+        <h1 style="font-size: 5rem; color: var(--warna-aksen); margin-bottom: 0;">MEMASUKI WAKTU SHOLAT</h1>
+        <h2 id="teks-sholat-sekarang" style="font-size: 7rem; margin: 10px 0;">-</h2>
+        <p style="font-size: 2.5rem; margin-top: 40px; color: #cbd5e1; max-width: 80%; line-height: 1.5;">"Marilah kita sejenak menghentikan aktivitas untuk menunaikan ibadah sholat berjamaah."</p>
+    </div>
+
+    <script>
+        const URL_GAS = "https://script.google.com/macros/s/AKfycbymxlu_CN7j9MAZDVs2xtyJe5hu9lajbDUtIDUPEYQzh2nzNW007JVKv08_91O25ijx/exec"; 
+        const urlParams = new URLSearchParams(window.location.search);
+        const idMasjid = urlParams.get('id') || 'arrahmah_pusat';
+
+        let dataAktif = {};
+        let jadwalSholatHariIni = {};
+        let modeAdzanAktif = false;
+        let posterIndexGlobal = 0;
+        let slideInfoIndex = 0;
+        let intervalPoster;
+        let intervalInfo;
+
+        async function sinkronisasiData() {
+            const dataLokal = localStorage.getItem(`data_lobi_${idMasjid}`);
+            if (dataLokal) { dataAktif = JSON.parse(dataLokal); terapkanDataKeLayar(); }
+
+            try {
+                const response = await fetch(`${URL_GAS}?id=${idMasjid}&_=${new Date().getTime()}`);
+                const dataBaru = await response.json();
+                
+                if(dataBaru.status !== "error") {
+                    dataAktif = dataBaru;
+                    localStorage.setItem(`data_lobi_${idMasjid}`, JSON.stringify(dataBaru));
+                    terapkanDataKeLayar();
+                    
+                    document.getElementById('dot-koneksi').style.backgroundColor = '#4ade80';
+                    document.getElementById('teks-koneksi').innerText = 'Online';
+                    document.getElementById('teks-koneksi').style.color = '#4ade80';
+                }
+            } catch (error) {
+                document.getElementById('dot-koneksi').style.backgroundColor = '#ef4444';
+                document.getElementById('teks-koneksi').innerText = 'Offline';
+                document.getElementById('teks-koneksi').style.color = '#ef4444';
+            }
+        }
+
+        function terapkanDataKeLayar() {
+            document.getElementById('nama-masjid').innerText = dataAktif.Nama_Masjid || "Lobi Utama Yayasan Ar-Rahmah";
+            document.getElementById('running-text').innerText = dataAktif.Running_Text || "Selamat Datang di Yayasan Ar-Rahmah Sulawesi. Kami berkomitmen mencetak generasi Qur'ani yang cerdas dan berkarakter pemimpin.";
+
+            clearInterval(intervalPoster);
+            clearInterval(intervalInfo);
+            terapkanSlideshowPoster();
+            terapkanInfoBawah();
+        }
+
+        function terapkanSlideshowPoster() {
+            const imgElement = document.getElementById('panel-poster');
+            const posterList = [];
+
+            if (dataAktif.Poster_1 && dataAktif.Poster_1.trim() !== "") posterList.push(dataAktif.Poster_1.trim());
+            if (dataAktif.Poster_2 && dataAktif.Poster_2.trim() !== "") posterList.push(dataAktif.Poster_2.trim());
+            if (dataAktif.Poster_3 && dataAktif.Poster_3.trim() !== "") posterList.push(dataAktif.Poster_3.trim());
+
+            if (posterList.length === 0) {
+                posterList.push("https://img.postimages.org/images/tX54nQJc.png"); // Default
+            }
+
+            imgElement.src = posterList[0];
+            imgElement.style.opacity = 1;
+
+            if (posterList.length > 1) {
+                intervalPoster = setInterval(() => {
+                    if (modeAdzanAktif) return;
+                    imgElement.style.opacity = 0; 
+                    setTimeout(() => {
+                        posterIndexGlobal = (posterIndexGlobal + 1) % posterList.length;
+                        imgElement.src = posterList[posterIndexGlobal];
+                        imgElement.style.opacity = 1;
+                    }, 1000); 
+                }, 30000); // Gambar ganti tiap 30 detik
+            }
+        }
+
+        function terapkanInfoBawah() {
+            const areaInfo = document.getElementById('area-info-bawah');
+            
+            // KONTEN MARKETING & EDUKASI KHUSUS LOBI
+            let isiSlideInfo = [
+                `<div><div style="font-size: 1.2rem; color: #eab308; text-transform: uppercase; letter-spacing: 1px;">Nilai Tarbiyah Hari Ini</div><div style="font-size: 2rem; font-weight: bold; margin-top:10px; line-height: 1.4;">"${dataAktif.Kutipan_Teks || 'Pendidikan adalah investasi peradaban terbaik untuk masa depan umat.'}"</div><div style="font-size: 1.3rem; margin-top: 10px; color: #94a3b8;">${dataAktif.Kutipan_Sumber || 'Yayasan Ar-Rahmah Sulawesi'}</div></div>`,
+                
+                `<div><div style="font-size: 1.2rem; color: #eab308; text-transform: uppercase; letter-spacing: 1px;">Visi Yayasan Ar-Rahmah</div><div style="font-size: 2rem; font-weight: bold; margin-top:10px; color: #4ade80;">"Membentuk Generasi Qur'ani, Cerdas, dan Berkarakter Pemimpin"</div><div style="font-size: 1.3rem; margin-top: 10px; color: #cbd5e1;">Menaungi unit pendidikan PAUD, SDIT, SMPIT, dan SMAIT di Makassar.</div></div>`,
+                
+                `<div><div style="font-size: 1.2rem; color: #eab308; text-transform: uppercase; letter-spacing: 1px;">Pusat Layanan Informasi</div><div style="font-size: 1.8rem; font-weight: bold; margin-top:10px;">Bapak/Ibu membutuhkan bantuan informasi Pendaftaran Siswa Baru (PPDB)?</div><div style="font-size: 1.4rem; margin-top: 10px; color: #cbd5e1;">Silakan menghubungi petugas resepsionis kami. Kami siap melayani Anda dengan sepenuh hati.</div></div>`
+            ];
+
+            areaInfo.innerHTML = isiSlideInfo[0];
+            areaInfo.style.opacity = 1;
+
+            intervalInfo = setInterval(() => {
+                if (modeAdzanAktif) return;
+                areaInfo.style.opacity = 0; 
+                setTimeout(() => {
+                    slideInfoIndex = (slideInfoIndex + 1) % isiSlideInfo.length;
+                    areaInfo.innerHTML = isiSlideInfo[slideInfoIndex];
+                    areaInfo.style.opacity = 1;
+                }, 500);
+            }, 15000); // Teks info melayang ganti tiap 15 detik
+        }
+
+        // --- PRAYTIMES OFFLINE LOKASI MAKASSAR ---
+        function hitungJadwalSholat() {
+            var pt = new PrayTimes('Egypt');
+            pt.adjust({fajr: 20, isha: 18}); 
+            var times = pt.getTimes(new Date(), [-5.1476, 119.4327], 8);
+            
+            jadwalSholatHariIni = {
+                Fajr: times.fajr, Sunrise: times.sunrise, Dhuhr: times.dhuhr,
+                Asr: times.asr, Maghrib: times.maghrib, Isha: times.isha
+            };
+
+            document.getElementById('list-jadwal').innerHTML = `
+                <div class="waktu-item"><span>Subuh</span> <span>${jadwalSholatHariIni.Fajr}</span></div>
+                <div class="waktu-item"><span>Terbit</span> <span>${jadwalSholatHariIni.Sunrise}</span></div>
+                <div class="waktu-item"><span>Dzuhur</span> <span>${jadwalSholatHariIni.Dhuhr}</span></div>
+                <div class="waktu-item"><span>Ashar</span> <span>${jadwalSholatHariIni.Asr}</span></div>
+                <div class="waktu-item"><span>Maghrib</span> <span>${jadwalSholatHariIni.Maghrib}</span></div>
+                <div class="waktu-item"><span>Isya</span> <span>${jadwalSholatHariIni.Isha}</span></div>
+            `;
+        }
+
+        function cekWaktuSholat() {
+            const sekarang = new Date();
+            const jam = String(sekarang.getHours()).padStart(2, '0');
+            const menit = String(sekarang.getMinutes()).padStart(2, '0');
+            const detik = String(sekarang.getSeconds()).padStart(2, '0');
+            const waktuSkrg = `${jam}:${menit}`;
+            
+            document.getElementById('jam-digital').innerHTML = `${waktuSkrg}<span style="font-size: 3rem; opacity: 0.5;">:${detik}</span>`;
+
+            if (waktuSkrg === "00:01" && sekarang.getSeconds() === 0) hitungJadwalSholat();
+
+            if (modeAdzanAktif || Object.keys(jadwalSholatHariIni).length === 0) return;
+
+            const namaSholat = Object.keys(jadwalSholatHariIni).find(key => jadwalSholatHariIni[key] === waktuSkrg && key !== 'Sunrise');
+
+            if (namaSholat) {
+                let terjemahanSholat = namaSholat;
+                if (namaSholat === 'Fajr') { terjemahanSholat = "SUBUH"; }
+                if (namaSholat === 'Dhuhr') { terjemahanSholat = "DZUHUR"; }
+                if (namaSholat === 'Asr') { terjemahanSholat = "ASHAR"; }
+                if (namaSholat === 'Maghrib') { terjemahanSholat = "MAGHRIB"; }
+                if (namaSholat === 'Isha') { terjemahanSholat = "ISYA"; }
+
+                mulaiModeAdzanLobi(terjemahanSholat);
+            }
+        }
+
+        function updateCountdownSholat() {
+            if (Object.keys(jadwalSholatHariIni).length === 0) return;
+            const sekarang = new Date();
+            const urutanSholat = [ { id: 'Fajr', nama: 'SUBUH' }, { id: 'Dhuhr', nama: 'DZUHUR' }, { id: 'Asr', nama: 'ASHAR' }, { id: 'Maghrib', nama: 'MAGHRIB' }, { id: 'Isha', nama: 'ISYA' } ];
+
+            let waktuNextSholat = null; let namaNextSholat = "";
+
+            for (let i = 0; i < urutanSholat.length; i++) {
+                const waktuString = jadwalSholatHariIni[urutanSholat[i].id]; 
+                if (!waktuString) continue;
+                const [jam, menit] = waktuString.split(':');
+                const waktuJadwal = new Date();
+                waktuJadwal.setHours(parseInt(jam), parseInt(menit), 0, 0);
+
+                if (waktuJadwal > sekarang) {
+                    waktuNextSholat = waktuJadwal; namaNextSholat = urutanSholat[i].nama; break;
+                }
+            }
+
+            if (!waktuNextSholat) {
+                const waktuSubuhString = jadwalSholatHariIni['Fajr'];
+                if (waktuSubuhString) {
+                    const [jam, menit] = waktuSubuhString.split(':');
+                    waktuNextSholat = new Date();
+                    waktuNextSholat.setDate(waktuNextSholat.getDate() + 1); 
+                    waktuNextSholat.setHours(parseInt(jam), parseInt(menit), 0, 0);
+                    namaNextSholat = 'SUBUH';
+                }
+            }
+
+            if (waktuNextSholat) {
+                const selisihMs = waktuNextSholat - sekarang;
+                const jam = Math.floor(selisihMs / (1000 * 60 * 60));
+                const menit = Math.floor((selisihMs % (1000 * 60 * 60)) / (1000 * 60));
+                const detik = Math.floor((selisihMs % (1000 * 60)) / 1000);
+                document.getElementById('nama-next-sholat').innerText = namaNextSholat;
+                document.getElementById('timer-next-sholat').innerText = `-${String(jam).padStart(2, '0')}:${String(menit).padStart(2, '0')}:${String(detik).padStart(2, '0')}`;
+            }
+        }
+
+        function mulaiModeAdzanLobi(namaSholat) {
+            modeAdzanAktif = true;
+            const layarAdzan = document.getElementById('layar-adzan');
+            document.getElementById('teks-sholat-sekarang').innerText = namaSholat;
+            layarAdzan.style.display = 'flex'; 
+
+            // Di lobi, layar adzan cukup tampil selama 3 menit (180 detik) sebagai pengingat sopan
+            setTimeout(() => {
+                layarAdzan.style.display = 'none';
+                modeAdzanAktif = false;
+            }, 180000); 
+        }
+
+        hitungJadwalSholat(); 
+        sinkronisasiData(); 
+        
+        setInterval(sinkronisasiData, 600000); // Sinkronisasi Google Sheets tiap 10 menit
+        setInterval(() => { cekWaktuSholat(); updateCountdownSholat(); }, 1000);
+    </script>
+</body>
+</html>
